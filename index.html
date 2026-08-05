@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Validador de Governança d'IA · Adhoc</title>
+<style>
+  :root{
+    --ink:#141b2e; --ink-soft:#4a5268; --paper:#faf8f3; --card:#ffffff; --line:#e3ddd0;
+    --brand:#2d4a63; --brand-2:#3a6ea5;
+    --n1:#3f8f5b; --n1-bg:#eaf5ee;
+    --n2:#c99a2e; --n2-bg:#fbf3dd;
+    --n3:#d1701f; --n3-bg:#fbeadb;
+    --n4:#c0392b; --n4-bg:#fbe7e4;
+    --risk-min:#3f8f5b; --risk-trans:#c97a1f; --risk-high:#b0341d; --risk-ban:#7a1616;
+    --shadow:0 1px 2px rgba(20,27,46,.05),0 8px 28px rgba(20,27,46,.08);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Georgia',ui-serif,serif;background:var(--paper);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .sans{font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:32px 20px 80px}
+
+  header.top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-bottom:22px;margin-bottom:30px;border-bottom:2px solid var(--ink)}
+  .logo{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;letter-spacing:-.5px;font-size:26px;color:var(--ink)}
+  .logo span{color:var(--brand-2)}
+  .top .tag{font-family:'Segoe UI',system-ui,sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:2px;color:var(--ink-soft);margin-left:auto}
+  h1{font-size:29px;line-height:1.25;letter-spacing:-.3px;margin-bottom:8px}
+  .lead{color:var(--ink-soft);font-size:16px;max-width:62ch}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px;margin-top:24px}
+  .card h2{font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--brand);display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .card h2 .num{background:var(--brand);color:#fff;width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+  .card .sub{font-size:13.5px;color:var(--ink-soft);margin:2px 0 18px 36px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+  label.fld{display:block;font-family:'Segoe UI',sans-serif;font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);margin-bottom:6px}
+  input[type=text]{width:100%;font-family:'Segoe UI',sans-serif;font-size:15px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
+  input[type=text]:focus{outline:2px solid var(--brand-2);outline-offset:1px;border-color:var(--brand-2)}
+
+  .qblock{margin-top:22px}
+  .qblock:first-child{margin-top:6px}
+  .qhead{font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--brand-2);margin-bottom:4px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+  .qhead.ai{color:var(--risk-trans)}
+  .qnote{font-family:'Segoe UI',sans-serif;font-size:12px;color:var(--ink-soft);margin:8px 0 12px}
+  .q{display:flex;gap:13px;align-items:flex-start;padding:13px 15px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;cursor:pointer;transition:.15s;background:#fff}
+  .q:hover{border-color:var(--brand-2);background:#fafcff}
+  .q.crit:hover,.q.ban:hover{border-color:var(--n4);background:#fdf6f5}
+  .q.trans:hover{border-color:var(--risk-trans);background:#fdf9f3}
+  .q input{margin-top:4px;width:18px;height:18px;accent-color:var(--brand-2);cursor:pointer;flex:none}
+  .q.crit input,.q.ban input{accent-color:var(--n4)}
+  .q.trans input{accent-color:var(--risk-trans)}
+  .q .txt{font-family:'Segoe UI',sans-serif;font-size:14.5px;color:var(--ink)}
+  .q .pts{margin-left:auto;font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;flex:none;background:var(--n1-bg);color:var(--n1)}
+  .q .pts.crit,.q .pts.ban{background:var(--n4-bg);color:var(--n4)}
+  .q .pts.trans{background:#fbeeda;color:var(--risk-trans)}
+  .q .pts.high{background:#f7e1dc;color:var(--risk-high)}
+  .q.zero{border-style:dashed}
+  .q.zero:hover{border-color:var(--ink-soft);background:#f7f6f2}
+  .q.zero input{accent-color:var(--ink-soft)}
+  .q .pts.zero{background:#eceae4;color:var(--ink-soft)}
+
+  .actions{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+  button{font-family:'Segoe UI',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;border-radius:10px;padding:13px 24px;transition:.15s}
+  .btn-main{background:var(--brand);color:#fff}
+  .btn-main:hover{background:#20374b}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--ink-soft);color:var(--ink)}
+
+  #result{display:none;scroll-margin-top:20px}
+  .verdict{border-radius:var(--radius);padding:26px;color:#fff;position:relative;overflow:hidden}
+  .verdict .lvl{font-family:'Segoe UI',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.9}
+  .verdict .grade{font-size:32px;font-weight:400;margin:6px 0 4px;letter-spacing:-.3px}
+  .verdict .pct{font-family:'Segoe UI',sans-serif;font-size:15px;opacity:.92}
+  .bar{height:9px;background:rgba(255,255,255,.25);border-radius:20px;margin-top:16px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:#fff;border-radius:20px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+  .riskrow{display:flex;align-items:center;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.28);flex-wrap:wrap}
+  .riskrow .rlabel{font-family:'Segoe UI',sans-serif;font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;opacity:.85}
+  .rbadge{font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:700;padding:5px 13px;border-radius:20px;background:rgba(255,255,255,.9);color:var(--ink)}
+
+  .discl{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:11px;padding:20px;margin-top:20px}
+  .discl h3{font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--brand);margin-bottom:10px}
+  #disclText{font-size:15px;color:var(--ink);line-height:1.6}
+  .discl .cright{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-family:'Segoe UI',sans-serif;font-size:12.5px;color:var(--ink-soft);display:flex;gap:16px;flex-wrap:wrap}
+
+  .translabel{background:#fdf9f3;border:1px solid #f0dcc0;border-left:4px solid var(--risk-trans);border-radius:11px;padding:18px 20px;margin-top:20px}
+  .translabel h3{font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--risk-trans);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .tagline{font-family:'Segoe UI',sans-serif;font-size:15px;font-weight:600;color:var(--ink);background:#fff;border:1px dashed #e0c9a4;border-radius:8px;padding:11px 14px;margin-bottom:10px}
+  .translabel p{font-family:'Segoe UI',sans-serif;font-size:13px;color:var(--ink-soft);line-height:1.5}
+
+  .seal-area{display:flex;gap:22px;align-items:center;margin-top:20px;flex-wrap:wrap}
+  #seal{width:150px;height:150px;flex:none}
+  .seal-txt{flex:1;min-width:200px}
+  .seal-txt p{font-family:'Segoe UI',sans-serif;font-size:14px;color:var(--ink-soft);margin-bottom:12px}
+
+  .foot{margin-top:40px;text-align:center;font-family:'Segoe UI',sans-serif;font-size:12px;color:var(--ink-soft);letter-spacing:.3px;line-height:1.6}
+  .hidden{display:none!important}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;font-family:'Segoe UI',sans-serif;font-size:14px;padding:12px 22px;border-radius:30px;box-shadow:var(--shadow);transition:.3s;opacity:0}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="logo">Ad<span>hoc</span></div>
+    <div class="tag">Governança d'IA · AI Act</div>
+  </header>
+
+  <h1>Validador d'ús de la Intel·ligència Artificial</h1>
+  <p class="lead">Registra el grau d'ús d'IA en un projecte cultural i n'obtén la classificació combinada: el nivell intern d'intensitat (1–4) i l'etiqueta de risc segons la Llei d'IA (UE 2024/1689), amb el disclaimer, l'etiqueta de transparència i el segell de certificació.</p>
+
+  <section class="card">
+    <h2><span class="num">1</span>Dades del projecte</h2>
+    <p class="sub">Identificació bàsica per al certificat.</p>
+    <div class="grid2">
+      <div><label class="fld" for="pNom">Nom del projecte</label><input type="text" id="pNom" placeholder="Ex. Festival de Tardor 2026"></div>
+      <div><label class="fld" for="pResp">Responsable</label><input type="text" id="pResp" placeholder="Nom i cognoms"></div>
+      <div><label class="fld" for="pDept">Departament</label><input type="text" id="pDept" placeholder="Ex. Comunicació"></div>
+      <div><label class="fld" for="pClient">Client / Finançador</label><input type="text" id="pClient" placeholder="Ex. Ajuntament / intern"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">2</span>Intensitat d'ús d'IA</h2>
+    <p class="sub">Marca totes les afirmacions certes. Determina el nivell intern (1–4).</p>
+
+    <div class="qblock">
+      <div class="qhead">Bloc A · Redacció i contingut textual</div>
+      <label class="q zero"><input type="checkbox" data-zero="A"><span class="txt">Sense ús d'IA en aquest bloc.</span><span class="pts zero">0</span></label>
+      <label class="q"><input type="checkbox" data-blk="A" data-pts="5"><span class="txt">La IA s'ha usat per a correcció lingüística o traducció de cortesia.</span><span class="pts">+5</span></label>
+      <label class="q"><input type="checkbox" data-blk="A" data-pts="15"><span class="txt">S'ha usat per esbossar l'estructura o apartats secundaris.</span><span class="pts">+15</span></label>
+      <label class="q"><input type="checkbox" data-blk="A" data-pts="25"><span class="txt">S'ha generat més del 50% del text final mitjançant IA.</span><span class="pts">+25</span></label>
+      <label class="q crit"><input type="checkbox" data-blk="A" data-crit="autoria"><span class="txt">El text final s'ha generat íntegrament per IA sense autoria ni edició humana.</span><span class="pts crit">Bloqueig</span></label>
+    </div>
+
+    <div class="qblock">
+      <div class="qhead">Bloc B · Anàlisi de dades i gestió</div>
+      <label class="q zero"><input type="checkbox" data-zero="B"><span class="txt">Sense ús d'IA en aquest bloc.</span><span class="pts zero">0</span></label>
+      <label class="q"><input type="checkbox" data-blk="B" data-pts="5"><span class="txt">S'ha usat per redactar correus electrònics de gestió interna o de cortesia.</span><span class="pts">+5</span></label>
+      <label class="q"><input type="checkbox" data-blk="B" data-pts="15"><span class="txt">S'ha emprat per netejar dades o fórmules d'Excel / Power BI.</span><span class="pts">+15</span></label>
+      <label class="q"><input type="checkbox" data-blk="B" data-pts="25"><span class="txt">S'han generat conclusions, previsions de públics o gràfics analítics fets per IA.</span><span class="pts">+25</span></label>
+      <label class="q crit"><input type="checkbox" data-blk="B" data-crit="dades"><span class="txt">S'han introduït dades personals (noms, correus, DNIs) sense anonimitzar.</span><span class="pts crit">Bloqueig</span></label>
+    </div>
+
+    <div class="qblock">
+      <div class="qhead">Bloc C · Xarxes socials, comunicació i contingut visual</div>
+      <label class="q zero"><input type="checkbox" data-zero="C"><span class="txt">Sense ús d'IA en aquest bloc.</span><span class="pts zero">0</span></label>
+      <label class="q"><input type="checkbox" data-blk="C" data-pts="5"><span class="txt">S'ha usat per generar icones, pictogrames o elements gràfics menors de suport.</span><span class="pts">+5</span></label>
+      <label class="q"><input type="checkbox" data-blk="C" data-pts="15"><span class="txt">S'han redactat o adaptat textos de publicacions per a xarxes socials (posts, peus, hashtags).</span><span class="pts">+15</span></label>
+      <label class="q"><input type="checkbox" data-blk="C" data-pts="25"><span class="txt">S'ha delegat a la IA la planificació de continguts o la còpia principal d'una campanya de comunicació.</span><span class="pts">+25</span></label>
+      <label class="q crit"><input type="checkbox" data-blk="C" data-crit="autor"><span class="txt">S'ha demanat a la IA imitar l'estil d'un artista viu o amb drets vigents.</span><span class="pts crit">Bloqueig</span></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">3</span>Risc segons la Llei d'IA</h2>
+    <p class="sub">Determina l'etiqueta jurídica (UE 2024/1689). Independent de la intensitat.</p>
+
+    <div class="qblock">
+      <div class="qhead ai">Pràctiques prohibides (risc inacceptable)</div>
+      <p class="qnote">Usos vetats per la Llei d'IA. Marcar-ne qualsevol denega la certificació.</p>
+      <label class="q ban"><input type="checkbox" data-ban="1"><span class="txt">Categorització biomètrica, reconeixement d'emocions de personal/públic, puntuació social o manipulació basada en IA.</span><span class="pts ban">Prohibit</span></label>
+      <label class="q ban"><input type="checkbox" data-ban="1"><span class="txt">Generació de contingut íntim no consentit o material d'abús (p. ex. apps de «nudificació»).</span><span class="pts ban">Prohibit</span></label>
+    </div>
+
+    <div class="qblock">
+      <div class="qhead ai">Alt risc</div>
+      <p class="qnote">Obliga a documentació, supervisió i registre reforçats.</p>
+      <label class="q"><input type="checkbox" data-high="1"><span class="txt">S'ha usat IA per triar o puntuar candidats en selecció de personal, o per avaluar persones en formació reglada.</span><span class="pts high">Alt risc</span></label>
+    </div>
+
+    <div class="qblock">
+      <div class="qhead ai">Transparència</div>
+      <p class="qnote">Obliga a etiquetar i/o declarar l'ús d'IA (exigible des d'agost de 2026).</p>
+      <label class="q trans"><input type="checkbox" data-trans="publica"><span class="txt">Es publicaran o difondran imatges, cartells, textos o àudio generats per IA de cara al públic.</span><span class="pts trans">Transp.</span></label>
+      <label class="q trans"><input type="checkbox" data-trans="hiper"><span class="txt">Alguna imatge hiperrealista podria induir el públic a error sobre un fet o espai cultural real.</span><span class="pts trans">Transp.</span></label>
+      <label class="q trans"><input type="checkbox" data-trans="chatbot"><span class="txt">El projecte inclou un chatbot o assistent automàtic que interactua amb el públic.</span><span class="pts trans">Transp.</span></label>
+      <label class="q trans"><input type="checkbox" data-trans="finan"><span class="txt">La IA té un pes rellevant en un informe a finançadors o administració pública.</span><span class="pts trans">Transp.</span></label>
+    </div>
+
+    <div class="actions">
+      <button class="btn-main" onclick="validar()">Validar projecte</button>
+      <button class="btn-ghost" onclick="reiniciar()">Reiniciar</button>
+    </div>
+  </section>
+
+  <section id="result">
+    <div class="verdict" id="verdict">
+      <div class="lvl" id="vLvl"></div>
+      <div class="grade" id="vGrade"></div>
+      <div class="pct" id="vPct"></div>
+      <div class="bar"><i id="vBar" style="width:0"></i></div>
+      <div class="riskrow">
+        <span class="rlabel">Llei d'IA:</span>
+        <span class="rbadge" id="rBadge"></span>
+        <span class="rlabel" id="rOblig" style="opacity:.9;letter-spacing:.3px;text-transform:none;font-size:13px"></span>
+      </div>
+    </div>
+
+    <div class="discl" id="disclCard">
+      <h3>Clàusula de transparència</h3>
+      <div id="disclText"></div>
+      <div class="cright" id="disclMeta"></div>
+      <div class="actions" style="margin-top:16px">
+        <button class="btn-ghost" onclick="copiarDiscl()">Copiar disclaimer</button>
+      </div>
+    </div>
+
+    <div class="translabel hidden" id="transCard">
+      <h3>⚠ Etiqueta de transparència obligatòria</h3>
+      <div class="tagline" id="transTag"></div>
+      <p id="transWhy"></p>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn-ghost" onclick="copiarTag()">Copiar etiqueta</button>
+      </div>
+    </div>
+
+    <div class="card" id="sealCard">
+      <h2><span class="num">✓</span>Segell de validació</h2>
+      <div class="seal-area">
+        <div id="sealHolder"></div>
+        <div class="seal-txt">
+          <p>Distintiu visual per adjuntar a memòries i lliurables. Inclou el nivell intern, l'etiqueta de risc AI Act, la data i un codi únic.</p>
+          <button class="btn-main" onclick="descarregarSegell()">Descarregar segell (PNG)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Adhoc · Eina interna de governança d'IA · Combina l'escala interna d'intensitat amb la classificació de risc del Reglament (UE) 2024/1689.<br>No substitueix la revisió humana obligatòria ni l'assessorament jurídic.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LEVELS = {
+  1:{name:"Nivell 1 · Ús mínim / Assistent",color:"#3f8f5b",range:"0–25%",
+     text:"<strong>Transparència IA · Ús assistent.</strong> Aquest projecte cultural ha estat desenvolupat íntegrament per l'equip humà d'Adhoc. Les eines d'intel·ligència artificial s'han fet servir exclusivament com a assistents lingüístics i de correcció d'estil, mantenint intacta l'originalitat i els drets de propietat intel·lectual de l'obra."},
+  2:{name:"Nivell 2 · Ús moderat / Co-creació",color:"#c99a2e",range:"26–50%",
+     text:"<strong>Transparència IA · Ús moderat.</strong> Aquest projecte inclou continguts i anàlisis desenvolupats amb el suport d'eines d'intel·ligència artificial en un grau moderat (Nivell 2), destinades a l'optimització d'estructures de dades i elements gràfics de suport. La direcció conceptual, la línia editorial i la validació final han estat realitzades de manera estricta per professionals humans."},
+  3:{name:"Nivell 3 · Ús intensiu",color:"#d1701f",range:"51–75%",
+     text:"<strong>Transparència IA · Ús intensiu.</strong> S'informa que aquest document i/o els seus materials visuals disposen d'un alt component de generació automatitzada mitjançant IA (Nivell 3). El contingut ha estat sotmès a un procés de validació, filtratge de biaixos i verificació de drets d'autor per part del comitè responsable abans de la seva difusió oficial. <em>Requereix la signatura del responsable abans de difondre el projecte.</em>"},
+  4:{name:"Nivell 4 · Bloquejat / Fora de normativa",color:"#c0392b",range:"+75% o alerta crítica",
+     text:"⚠️ <strong>Validació denegada.</strong> El projecte incompleix la normativa de governança interna d'IA o la Llei d'IA. Motiu: se supera el límit humà requerit, s'ha vulnerat una clàusula crítica de confidencialitat o drets d'autor, o s'ha marcat una pràctica prohibida per la Llei d'IA. Corregiu el flux de treball i torneu a fer la validació."}
+};
+
+const RISK = {
+  ban:  {label:"Risc inacceptable · PROHIBIT", color:"#7a1616", oblig:"Ús vetat per la Llei d'IA. Certificació denegada."},
+  high: {label:"Alt risc", color:"#b0341d", oblig:"Cal documentació tècnica, supervisió humana i registre d'activitat reforçats."},
+  trans:{label:"Risc de transparència", color:"#c97a1f", oblig:"Cal etiquetar el contingut i/o declarar l'ús d'IA."},
+  min:  {label:"Risc mínim", color:"#3f8f5b", oblig:"Sense obligacions addicionals segons la Llei d'IA."}
+};
+
+let lastState = null;
+
+// Exclusió mútua: "0 ús" i la resta d'opcions del mateix bloc
+document.querySelectorAll('.q input').forEach(c=>{
+  c.addEventListener('change', e=>{
+    const el=e.target;
+    if(el.dataset.zero){
+      // marcar "0" → desmarca tota la resta del bloc
+      if(el.checked){
+        document.querySelectorAll(`.q input[data-blk="${el.dataset.zero}"]`).forEach(o=>o.checked=false);
+      }
+    } else if(el.dataset.blk){
+      // marcar qualsevol opció → desmarca el "0" del bloc
+      if(el.checked){
+        const z=document.querySelector(`.q input[data-zero="${el.dataset.blk}"]`);
+        if(z) z.checked=false;
+      }
+    }
+  });
+});
+
+function validar(){
+  let score=0, critConf=false, critAutor=false, critAutoria=false, banned=false, high=false;
+  const trans=[];
+  document.querySelectorAll('.q input').forEach(c=>{
+    if(!c.checked) return;
+    if(c.dataset.crit==='dades') critConf=true;
+    else if(c.dataset.crit==='autor') critAutor=true;
+    else if(c.dataset.crit==='autoria') critAutoria=true;
+    else if(c.dataset.ban) banned=true;
+    else if(c.dataset.high) high=true;
+    else if(c.dataset.trans) trans.push(c.dataset.trans);
+    else score += parseInt(c.dataset.pts||0,10);
+  });
+
+  const critical = critConf || critAutor || critAutoria;
+
+  let level;
+  if(banned || critical || score>75) level=4;
+  else if(score>=51) level=3;
+  else if(score>=26) level=2;
+  else level=1;
+
+  let risk;
+  if(banned) risk='ban';
+  else if(high) risk='high';
+  else if(trans.length) risk='trans';
+  else risk='min';
+
+  const L = LEVELS[level];
+  const R = RISK[risk];
+  const pctShown = Math.min(score,100);
+  const blocked = (level===4);
+
+  const v=document.getElementById('verdict');
+  v.style.background=`linear-gradient(135deg, ${L.color}, ${shade(L.color,-18)})`;
+  document.getElementById('vLvl').textContent=L.name.split('·')[0].trim();
+  document.getElementById('vGrade').textContent=L.name.split('·').slice(1).join('·').trim();
+  document.getElementById('vPct').textContent = (critical||banned)
+     ? "Alerta crítica · " + (banned?"pràctica prohibida per la Llei d'IA":(critConf?"dades personals sense anonimitzar":(critAutoria?"text íntegrament generat per IA sense autoria humana":"imitació d'estil protegit")))
+     : `Puntuació d'intensitat: ${score} punts (${L.range})`;
+  const bar=document.getElementById('vBar'); bar.style.width="0";
+
+  const rb=document.getElementById('rBadge');
+  rb.textContent=R.label; rb.style.color=R.color;
+  document.getElementById('rOblig').textContent=R.oblig;
+
+  document.getElementById('disclText').innerHTML=L.text;
+  const nom=val('pNom')||'Projecte sense nom';
+  const resp=val('pResp')||'—';
+  const code=genCode(nom, level, risk);
+  const date=new Date().toLocaleDateString('ca-ES',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('disclMeta').innerHTML =
+     `<span><strong>Projecte:</strong> ${esc(nom)}</span>`+
+     `<span><strong>Responsable:</strong> ${esc(resp)}</span>`+
+     `<span><strong>Risc AI Act:</strong> ${R.label}</span>`+
+     `<span><strong>Data:</strong> ${date}</span>`+
+     `<span><strong>Codi:</strong> ${code}</span>`;
+  document.getElementById('disclCard').style.borderLeftColor=L.color;
+
+  const tc=document.getElementById('transCard');
+  if(risk==='trans' && !blocked){
+    tc.classList.remove('hidden');
+    let tag="Imatge conceptual generada amb IA";
+    if(trans.includes('chatbot')) tag="Assistència automatitzada amb IA — esteu interactuant amb un sistema d'IA";
+    else if(trans.includes('finan')) tag="Aquest material s'ha elaborat amb suport rellevant d'intel·ligència artificial";
+    else if(trans.includes('hiper')) tag="Imatge generada amb IA · no representa un fet o espai real";
+    document.getElementById('transTag').textContent = "«"+tag+"»";
+    const reasons={publica:"contingut generat per IA difós al públic", hiper:"imatge hiperrealista que pot induir a error", chatbot:"interacció automàtica amb el públic", finan:"pes rellevant de la IA en informe a tercers"};
+    document.getElementById('transWhy').textContent = "Aplicable perquè: " + trans.map(t=>reasons[t]).join("; ") + ". Adjunteu aquesta menció de manera clara i visible al lliurable.";
+  } else {
+    tc.classList.add('hidden');
+  }
+
+  const sealCard=document.getElementById('sealCard');
+  if(blocked){ sealCard.classList.add('hidden'); }
+  else { sealCard.classList.remove('hidden'); drawSeal(L, level, R, risk, code, date); }
+
+  lastState={level,risk,code};
+  document.getElementById('result').style.display='block';
+  document.getElementById('result').scrollIntoView({behavior:'smooth'});
+  setTimeout(()=>{ bar.style.width=pctShown+"%"; },250);
+}
+
+function drawSeal(L, level, R, riskKey, code, date){
+  const rShort={min:"RISC MÍNIM",trans:"TRANSPARÈNCIA",high:"ALT RISC"}[riskKey]||"";
+  const svg=`
+  <svg id="seal" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="95" fill="#fff" stroke="${L.color}" stroke-width="3"/>
+    <circle cx="100" cy="100" r="86" fill="none" stroke="${L.color}" stroke-width="1" stroke-dasharray="2 4"/>
+    <path id="cpath" d="M100,26 a74,74 0 1,1 -0.1,0" fill="none"/>
+    <text font-family="Segoe UI,sans-serif" font-size="10.5" font-weight="700" letter-spacing="2.2" fill="${L.color}">
+      <textPath href="#cpath" startOffset="0%">VALIDACIÓ IA · ADHOC · AI ACT · </textPath>
+    </text>
+    <text x="100" y="68" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9.5" font-weight="600" letter-spacing="1.5" fill="#4a5268">NIVELL</text>
+    <text x="100" y="112" text-anchor="middle" font-family="Georgia,serif" font-size="52" font-weight="700" fill="${L.color}">${level}</text>
+    <rect x="46" y="122" width="108" height="16" rx="8" fill="${R.color}"/>
+    <text x="100" y="133.5" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="8" font-weight="700" letter-spacing="1" fill="#fff">${rShort}</text>
+    <text x="100" y="156" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="7" fill="#8a90a0">${code}</text>
+    <text x="100" y="167" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="6.5" fill="#8a90a0">${date}</text>
+  </svg>`;
+  document.getElementById('sealHolder').innerHTML=svg;
+}
+
+function descarregarSegell(){
+  const svgEl=document.getElementById('seal');
+  if(!svgEl){ toast("Genera primer una validació vàlida."); return; }
+  const xml=new XMLSerializer().serializeToString(svgEl);
+  const img=new Image();
+  const svg64='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(xml)));
+  img.onload=function(){
+    const c=document.createElement('canvas'); c.width=600;c.height=600;
+    const ctx=c.getContext('2d'); ctx.fillStyle='#fff';ctx.fillRect(0,0,600,600);
+    ctx.drawImage(img,0,0,600,600);
+    const a=document.createElement('a');
+    a.download='segell_ia_'+(lastState?lastState.code:'adhoc')+'.png';
+    a.href=c.toDataURL('image/png'); a.click();
+    toast("Segell descarregat.");
+  };
+  img.src=svg64;
+}
+
+function copiarDiscl(){
+  const t=document.getElementById('disclText').innerText;
+  const meta=document.getElementById('disclMeta').innerText.replace(/\n/g,' · ');
+  navigator.clipboard.writeText(t+"\n\n"+meta).then(()=>toast("Disclaimer copiat."));
+}
+function copiarTag(){
+  const t=document.getElementById('transTag').innerText;
+  navigator.clipboard.writeText(t).then(()=>toast("Etiqueta copiada."));
+}
+
+function reiniciar(){
+  document.querySelectorAll('.q input').forEach(c=>c.checked=false);
+  ['pNom','pResp','pDept','pClient'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('result').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function val(id){return document.getElementById(id).value.trim();}
+function esc(s){return s.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function genCode(nom,lvl,risk){
+  const rc={min:"M",trans:"T",high:"A",ban:"P"}[risk]||"X";
+  let h=0; const s=nom+lvl+risk+Date.now();
+  for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0;}
+  return "IA-"+lvl+rc+"-"+h.toString(36).toUpperCase().slice(0,6);
+}
+function shade(hex,p){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.max(0,Math.min(255,r+p));g=Math.max(0,Math.min(255,g+p));b=Math.max(0,Math.min(255,b+p));
+  return `rgb(${r},${g},${b})`;
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+</script>
+</body>
+</html>
